@@ -1,4 +1,3 @@
-// STEALTH: Use playwright-extra and stealth plugin
 const {chromium} = require('playwright');
 import * as fs from 'fs';
 import https from 'https';
@@ -6,7 +5,6 @@ import * as dotenv from 'dotenv';
 const path = require('path');
 dotenv.config({ path: path.resolve(__dirname, '/home/trendpup/trendpup/.env') });
 
-// Types and interfaces
 interface Token {
   name: string;
   symbol: string;
@@ -57,16 +55,13 @@ interface ScrapingQueue {
   activeTokens: Token[];
   maxTokens: number;
   lastFileHash: string;
-  scrapedTokens: Set<string>; // Track which tokens have been scraped
+  scrapedTokens: Set<string>;
 }
 
-// Configuration
-const MAX_TOKENS_TO_SCRAPE = 20; // Limit concurrent scraping to 20 tokens
-// Path to the rolling tweets file
+const MAX_TOKENS_TO_SCRAPE = 20;
 const TWEETS_FILE = 'tweets.json';
 const MAX_TOKENS_IN_FILE = 100;
 
-// In-memory queue - no file needed
 let currentQueue: ScrapingQueue = {
   timestamp: new Date().toISOString(),
   activeTokens: [],
@@ -75,18 +70,13 @@ let currentQueue: ScrapingQueue = {
   scrapedTokens: new Set()
 };
 
-// Track last-scraped timestamps for each token
 let lastScraped: Record<string, string> = {};
-
-// Flag to block token file reading during a full run
 let isFullRunInProgress = false;
 let pendingNewTokens: Token[] = [];
 
-// Function to get file hash for detecting changes
 function getFileHash(filePath: string): string {
   try {
     const fileContent = fs.readFileSync(filePath, 'utf8');
-    // Simple hash using file content length and first/last chars
     const hash = fileContent.length.toString() + 
                  (fileContent.charCodeAt(0) || 0).toString() + 
                  (fileContent.charCodeAt(fileContent.length - 1) || 0).toString();
@@ -96,18 +86,15 @@ function getFileHash(filePath: string): string {
   }
 }
 
-// Function to get all tokens from file
 function getAllTokens(): Token[] {
   const tokensData = JSON.parse(fs.readFileSync('solana_tokens.json', 'utf8'));
   return tokensData.tokens;
 }
 
-// Helper to load tweets.json (rolling file)
 function loadTweetsFile(): Record<string, TokenResult> {
   if (!fs.existsSync(TWEETS_FILE)) return {};
   try {
     const data = JSON.parse(fs.readFileSync(TWEETS_FILE, 'utf8'));
-    // Data is an array or object keyed by symbol
     if (Array.isArray(data)) {
       // Legacy: convert to object
       const obj: Record<string, TokenResult> = {};
@@ -121,12 +108,9 @@ function loadTweetsFile(): Record<string, TokenResult> {
   }
 }
 
-// Helper to save tweets.json (rolling file)
 function saveTweetsFile(tweetsObj: Record<string, TokenResult>) {
-  // Only keep up to MAX_TOKENS_IN_FILE, remove oldest by searchTimestamp
   const entries = Object.entries(tweetsObj);
   if (entries.length > MAX_TOKENS_IN_FILE) {
-    // Sort by searchTimestamp ascending (oldest first)
     entries.sort((a, b) => new Date(a[1].searchTimestamp).getTime() - new Date(b[1].searchTimestamp).getTime());
   }
   const trimmed = entries.slice(-MAX_TOKENS_IN_FILE);
@@ -135,30 +119,22 @@ function saveTweetsFile(tweetsObj: Record<string, TokenResult>) {
   fs.writeFileSync(TWEETS_FILE, JSON.stringify(outObj, null, 2));
 }
 
-// Helper: Update tweets.json after each token
 function updateTweetsFileWithToken(tokenResult: TokenResult, currentSymbols: Set<string>) {
   const tweetsData = loadTweetsFile();
-  // Remove any tokens not in the current 100
   let filtered = Object.values(tweetsData).filter(t => currentSymbols.has(t.symbol));
-  // Remove this token if already present (to update it)
   filtered = filtered.filter(t => t.symbol !== tokenResult.symbol);
-  // Add the new/updated token at the end
   filtered.push(tokenResult);
-  // If more than 100, remove oldest
   while (filtered.length > MAX_TOKENS_IN_FILE) filtered.shift();
-  // Convert back to object for saving
   const filteredObj = {} as Record<string, TokenResult>;
   filtered.forEach(tr => { filteredObj[tr.symbol] = tr; });
   saveTweetsFile(filteredObj);
 }
 
-// Function to update scraping queue with new tokens
 function updateScrapingQueue(): Token[] {
   console.log('Checking for token list updates...');
 
   const currentFileHash = getFileHash('solana_tokens.json');
 
-  // If file hasn't changed, return current active tokens
   if (currentQueue.lastFileHash === currentFileHash && currentQueue.activeTokens.length > 0) {
     console.log('No changes detected in token list');
     return currentQueue.activeTokens;
@@ -166,27 +142,19 @@ function updateScrapingQueue(): Token[] {
 
   console.log('Token list updated or first run, updating scraping queue...');
 
-  // Load all available tokens
   const tokensData = JSON.parse(fs.readFileSync('solana_tokens.json', 'utf8'));
   const allTokens: Token[] = tokensData.tokens;
 
-  // Get currently active token symbols for comparison
   const currentActiveSymbols = new Set(currentQueue.activeTokens.map(t => t.symbol));
-
-  // Find new tokens that aren't currently being scraped
   const newTokens = allTokens.filter(token => !currentActiveSymbols.has(token.symbol));
 
-  // If we have new tokens and we're at capacity, remove oldest tokens
   if (newTokens.length > 0 && currentQueue.activeTokens.length >= MAX_TOKENS_TO_SCRAPE) {
     const tokensToRemove = Math.min(newTokens.length, currentQueue.activeTokens.length);
     const removedTokens = currentQueue.activeTokens.splice(0, tokensToRemove);
     console.log(`Removed ${tokensToRemove} tokens from queue:`, removedTokens.map(t => t.symbol).join(', '));
-
-    // Remove from scraped tokens set to allow them to be added back later
     removedTokens.forEach(token => currentQueue.scrapedTokens.delete(token.symbol));
   }
 
-  // Add new tokens to the end of the queue
   const tokensToAdd = newTokens.slice(0, MAX_TOKENS_TO_SCRAPE - currentQueue.activeTokens.length);
   currentQueue.activeTokens.push(...tokensToAdd);
 
@@ -194,13 +162,10 @@ function updateScrapingQueue(): Token[] {
     console.log(`Added ${tokensToAdd.length} new tokens to queue:`, tokensToAdd.map(t => t.symbol).join(', '));
   }
 
-  // If queue is empty (first run), take the first MAX_TOKENS_TO_SCRAPE tokens
   if (currentQueue.activeTokens.length === 0) {
     currentQueue.activeTokens = allTokens.slice(0, MAX_TOKENS_TO_SCRAPE);
     console.log(`Initialized queue with ${currentQueue.activeTokens.length} tokens`);
   }
-
-  // Update queue metadata
   currentQueue.timestamp = new Date().toISOString();
   currentQueue.lastFileHash = currentFileHash;
 
@@ -215,7 +180,6 @@ const userAgentStrings = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
 ];
 
-// Tor control port config for IP rotation
 const net = require('net');
 const TOR_CONTROL_PORT = 9051;
 const TOR_CONTROL_PASSWORD = process.env.TOR_PASSWORD
@@ -241,7 +205,6 @@ async function sendTorNewnym(): Promise<void> {
   });
 }
 
-// Function to run the scraping process
 async function runScraper() {
   console.log(`\n=== Starting scraper run at ${new Date().toISOString()} ===`);
 
@@ -254,7 +217,6 @@ async function runScraper() {
   let lastUserAgentIndex = -1;
   while (attempt < maxRetries) {
     try {
-      // Pick a new user agent each time
       let uaIndex;
       do {
         uaIndex = Math.floor(Math.random() * userAgentStrings.length);
@@ -270,7 +232,6 @@ async function runScraper() {
       await page.addInitScript(() => {
         Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
       });
-      // Load cookies for authentication if available
       if (fs.existsSync(require('path').resolve(__dirname, 'cookies.json'))) {
         const cookiesRaw = JSON.parse(fs.readFileSync(require('path').resolve(__dirname, 'cookies.json'), 'utf8'));
         const cookies = cookiesRaw.map((cookie: any) => ({
@@ -291,8 +252,6 @@ async function runScraper() {
       await page.goto('https://x.com/home', { timeout: 60000 });
       await page.waitForTimeout(8000);
       try {
-        // More robust: wait up to 30s for search box, check for login wall, save HTML on failure
-        // Try multiple selectors for the search box
         let searchBox = null;
         const searchSelectors = [
           'SearchBox_Search_Input',
@@ -313,7 +272,6 @@ async function runScraper() {
           }
         }
         
-        // If no testId works, try other common selectors
         if (!searchBox) {
           const altSelectors = [
             'input[placeholder*="Search"]',
@@ -342,13 +300,12 @@ async function runScraper() {
         
         await searchBox.click();
         console.log('Successfully authenticated with cookies!');
-        consecutiveFailures = 0; // Reset on success
+        consecutiveFailures = 0;
         break;
       } catch (e) {
         await page.screenshot({ path: `auth_failure_${Date.now()}.png`, fullPage: true });
         const html = await page.content();
         fs.writeFileSync(`auth_failure_${Date.now()}.html`, html);
-        // Optionally, check for login wall or challenge
         if (await page.locator('text=Log in to X').count() > 0) {
           console.error('Login wall detected!');
         } else if (await page.locator('text=Enter your phone number').count() > 0) {
@@ -380,7 +337,7 @@ async function runScraper() {
         await sendTorNewnym();
         await new Promise(res => setTimeout(res, 5 * 60 * 1000));
         consecutiveFailures = 0;
-        attempt = 0; // Optionally reset attempt counter for a fresh cycle
+        attempt = 0;
       } else if (attempt >= maxRetries) {
         return;
       } else {
@@ -390,7 +347,6 @@ async function runScraper() {
       }
     }
   }
-  // Deduplicate tokens before scraping
   const tokens = Array.from(new Map(updateScrapingQueue().map(t => [t.symbol, t])).values());
   
   console.log(`Found ${tokens.length} tokens to search for (from active scraping queue)`);
@@ -411,7 +367,6 @@ async function runScraper() {
   if (browser) await browser.close().catch(() => {});
 }
 
-// Function to calculate milliseconds until next hour
 function millisecondsUntilNextHour() {
   const now = new Date();
   const nextHour = new Date(now);
@@ -419,7 +374,6 @@ function millisecondsUntilNextHour() {
   return nextHour.getTime() - now.getTime();
 }
 
-// Function to display current queue status
 function displayQueueStatus(): void {
   console.log('\n=== Current Scraping Queue Status ===');
   console.log(`Last updated: ${currentQueue.timestamp}`);
@@ -434,7 +388,6 @@ function displayQueueStatus(): void {
     });
   }
   
-  // Show available tokens not in queue
   try {
     const tokensData = JSON.parse(fs.readFileSync('solana_tokens.json', 'utf8'));
     const allTokens: Token[] = tokensData.tokens;
@@ -457,7 +410,6 @@ function displayQueueStatus(): void {
   console.log('=====================================\n');
 }
 
-// Function to manually add a token to the queue
 function addTokenToQueue(symbol: string): boolean {
   try {
     const tokensData = JSON.parse(fs.readFileSync('solana_tokens.json', 'utf8'));
@@ -485,7 +437,6 @@ function addTokenToQueue(symbol: string): boolean {
   }
 }
 
-// Function to remove a token from the queue
 function removeTokenFromQueue(symbol: string): boolean {
   const initialLength = currentQueue.activeTokens.length;
   currentQueue.activeTokens = currentQueue.activeTokens.filter(t => t.symbol !== symbol);
@@ -501,9 +452,7 @@ function removeTokenFromQueue(symbol: string): boolean {
   }
 }
 
-// Function to scrape a list of tokens
 async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResults) {
-  // Load rolling tweets file at start
   let tweetsObj = loadTweetsFile();
   let failedTokens: Token[] = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -523,7 +472,6 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
     try {
       const startTokenTime = Date.now();
       
-      // Find search box with robust selector approach
       let searchBox = null;
       const searchSelectors = [
         'SearchBox_Search_Input',
@@ -540,11 +488,9 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
           console.log(`Using search box selector: ${selector}`);
           break;
         } catch (e) {
-          // Continue to next selector
         }
       }
       
-      // If no testId works, try other common selectors
       if (!searchBox) {
         const altSelectors = [
           'input[placeholder*="Search"]',
@@ -562,7 +508,6 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
             console.log(`Using search box CSS selector: ${selector}`);
             break;
           } catch (e) {
-            // Continue to next selector
           }
         }
       }
@@ -575,7 +520,6 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
       await searchBox.fill('');
       await searchBox.fill(`$${symbol}`);
       await page.keyboard.press('Enter');
-      // Wait for tweets to appear after navigation
       await page.waitForSelector('[data-testid="tweet"]', { timeout: 15000 });
       try {
         await page.getByRole('tab', { name: 'Latest' }).click();
@@ -627,7 +571,6 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
           }
         } catch (e) { }
         await page.waitForTimeout(Math.random() * 700 + 100);
-        // Hard stop if total time for this token exceeds 40s
         if (Date.now() - startTokenTime > 40000) {
           console.log(`Hard timeout: Stopping scrape for ${symbol} after 40s.`);
           break;
@@ -636,29 +579,23 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
       tokenResult.totalTweets = tokenResult.tweets.length;
       allResults.results.push(tokenResult);
       lastScraped[symbol] = new Date().toISOString();
-      // --- Rolling file update logic ---
       tweetsObj[symbol] = tokenResult;
       saveTweetsFile(tweetsObj);
-      // --- End rolling file update ---
     } catch (error) {
       console.error(`Error searching for ${symbol}:`, (error as any).message);
       tokenResult.error = (error as any).message;
       tokenResult.totalTweets = 0;
       allResults.results.push(tokenResult);
-      // Still update rolling file with error result
       tweetsObj[symbol] = tokenResult;
       saveTweetsFile(tweetsObj);
-      failedTokens.push(token); // Add to retry list
+      failedTokens.push(token);
       continue;
     }
   }
-  // Retry failed tokens after 1 minute, only once
   if (failedTokens.length > 0) {
     console.log(`Retrying ${failedTokens.length} failed token(s) after 1 minute...`);
     await new Promise(res => setTimeout(res, 60000));
-    // Remove duplicates in case of repeated failures
     const uniqueFailed = Array.from(new Map(failedTokens.map(t => [t.symbol, t])).values());
-    // Use the same page instance for retry
     for (let i = 0; i < uniqueFailed.length; i++) {
       const token = uniqueFailed[i];
       const symbol = token.symbol;
@@ -675,8 +612,6 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
       };
       try {
         const startTokenTime = Date.now();
-        
-        // Find search box with robust selector approach
         let searchBox = null;
         const searchSelectors = [
           'SearchBox_Search_Input',
@@ -693,11 +628,8 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
             console.log(`Using search box selector: ${selector}`);
             break;
           } catch (e) {
-            // Continue to next selector
           }
         }
-        
-        // If no testId works, try other common selectors
         if (!searchBox) {
           const altSelectors = [
             'input[placeholder*="Search"]',
@@ -715,7 +647,6 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
               console.log(`Using search box CSS selector: ${selector}`);
               break;
             } catch (e) {
-              // Continue to next selector
             }
           }
         }
@@ -802,9 +733,7 @@ async function scrapeTokens(tokens: Token[], page: any, allResults: ScrapingResu
   }
 }
 
-// Function to scrape only new tokens
 async function scrapeNewTokens(newTokens: Token[]) {
-  // Deduplicate new tokens
   newTokens = Array.from(new Map(newTokens.map(t => [t.symbol, t])).values());
   if (newTokens.length === 0) return;
   console.log(`\nScraping ${newTokens.length} new token(s) immediately: ${newTokens.map(t => t.symbol).join(', ')}`);
@@ -824,7 +753,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
       await page.addInitScript(() => {
         Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
       });
-      // Load cookies for authentication if available
       if (fs.existsSync(require('path').resolve(__dirname, '../cookies.json'))) {
         const cookiesRaw = JSON.parse(fs.readFileSync(require('path').resolve(__dirname, '../cookies.json'), 'utf8'));
         const cookies = cookiesRaw.map((cookie: any) => ({
@@ -844,8 +772,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
       await page.goto('https://x.com/home', { timeout: 60000 });
       await page.waitForTimeout(8000);
       try {
-        // More robust: wait up to 30s for search box, check for login wall, save HTML on failure
-        // Try multiple selectors for the search box
         let searchBox = null;
         const searchSelectors = [
           'SearchBox_Search_Input',
@@ -865,8 +791,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
             console.log(`Selector ${selector} not found, trying next...`);
           }
         }
-        
-        // If no testId works, try other common selectors
         if (!searchBox) {
           const altSelectors = [
             'input[placeholder*="Search"]',
@@ -900,7 +824,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
         await page.screenshot({ path: `auth_failure_${Date.now()}.png`, fullPage: true });
         const html = await page.content();
         fs.writeFileSync(`auth_failure_${Date.now()}.html`, html);
-        // Optionally, check for login wall or challenge
         if (await page.locator('text=Log in to X').count() > 0) {
           console.error('Login wall detected!');
         } else if (await page.locator('text=Enter your phone number').count() > 0) {
@@ -961,12 +884,10 @@ async function scrapeNewTokens(newTokens: Token[]) {
   }
 }
 
-// Main execution function
 (async () => {
   console.log('Twitter Token Scraper - Dynamic Token Mode (100 tokens)');
   console.log('==========================================');
 
-  // Initial scrape of all tokens
   async function scrapeAllTokens() {
     isFullRunInProgress = true;
     const tokens = getAllTokens();
@@ -993,7 +914,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
       const page = await context.newPage();
       await page.goto('https://x.com/home');
       try {
-        // Find search box with robust selector approach
         let searchBox = null;
         const searchSelectors = [
           'SearchBox_Search_Input',
@@ -1010,11 +930,9 @@ async function scrapeNewTokens(newTokens: Token[]) {
             console.log(`Using search box selector: ${selector}`);
             break;
           } catch (e) {
-            // Continue to next selector
           }
         }
         
-        // If no testId works, try other common selectors
         if (!searchBox) {
           const altSelectors = [
             'input[placeholder*="Search"]',
@@ -1032,7 +950,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
               console.log(`Using search box CSS selector: ${selector}`);
               break;
             } catch (e) {
-              // Continue to next selector
             }
           }
         }
@@ -1062,8 +979,7 @@ async function scrapeNewTokens(newTokens: Token[]) {
       console.error('Error during scraping:', error);
     } finally {
       await browser.close();
-      isFullRunInProgress = false;
-      // If any new tokens were detected during the full run, scrape them now
+        isFullRunInProgress = false;
       if (pendingNewTokens.length > 0) {
         const unique = Array.from(new Set(pendingNewTokens.map(t => t.symbol)));
         const allTokens = getAllTokens();
@@ -1075,10 +991,8 @@ async function scrapeNewTokens(newTokens: Token[]) {
     }
   }
 
-  // Initial full scrape
   await scrapeAllTokens();
 
-  // Watch for new tokens
   let lastTokenSymbols = new Set(getAllTokens().map(t => t.symbol));
   if (fs.existsSync('solana_tokens.json')) {
     fs.watchFile('solana_tokens.json', { interval: 5000 }, async (curr, prev) => {
@@ -1087,11 +1001,9 @@ async function scrapeNewTokens(newTokens: Token[]) {
       const newTokens = tokens.filter(t => !lastTokenSymbols.has(t.symbol));
       if (newTokens.length > 0) {
         if (isFullRunInProgress) {
-          // Queue new tokens to be scraped after the full run
           pendingNewTokens.push(...newTokens);
         } else {
           await scrapeNewTokens(newTokens);
-          // Update lastScraped for new tokens
           newTokens.forEach(t => lastScraped[t.symbol] = new Date().toISOString());
         }
       }
@@ -1099,7 +1011,6 @@ async function scrapeNewTokens(newTokens: Token[]) {
     });
   }
 
-  // Schedule to run every 12 hours
   function msUntilNext12Hour() {
     const now = new Date();
     const next = new Date(now);

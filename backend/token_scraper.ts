@@ -14,7 +14,6 @@ chromium.use(StealthPlugin());
 const TOR_CONTROL_PORT = 9051;
 const TOR_CONTROL_PASSWORD = process.env.TOR_PASSWORD;
 
-// Extend global interfaces for TypeScript
 declare global {
   interface Window {
     chrome: any;
@@ -133,7 +132,6 @@ async function detectBlocking(page: Page): Promise<BlockingStatus> {
 
 async function injectAdvancedStealthScripts(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // Remove all webdriver properties using try-catch to handle read-only properties
     try {
       delete (window.navigator as any).webdriver;
     } catch (e) {}
@@ -178,25 +176,21 @@ async function injectAdvancedStealthScripts(page: Page): Promise<void> {
       delete (window.navigator as any).__selenium_evaluate;
     } catch (e) {}
     
-    // Override navigator.webdriver
     Object.defineProperty(navigator, 'webdriver', {
       get: () => false,
       configurable: true
     });
     
-    // Override plugins
     Object.defineProperty(navigator, 'plugins', {
       get: () => [1, 2, 3, 4, 5],
       configurable: true
     });
     
-    // Override languages
     Object.defineProperty(navigator, 'languages', {
       get: () => ['en-US', 'en', 'fr'],
       configurable: true
     });
     
-    // Randomize WebGL fingerprint
     const getParameter = WebGLRenderingContext.prototype.getParameter;
     WebGLRenderingContext.prototype.getParameter = function(parameter: number) {
       if (parameter === 37445) {
@@ -208,7 +202,6 @@ async function injectAdvancedStealthScripts(page: Page): Promise<void> {
       return getParameter.call(this, parameter);
     };
     
-    // Override screen properties with slight randomization
     const originalHeight = screen.availHeight;
     const originalWidth = screen.availWidth;
     Object.defineProperty(screen, 'availHeight', {
@@ -221,14 +214,11 @@ async function injectAdvancedStealthScripts(page: Page): Promise<void> {
       configurable: true
     });
     
-    // Override console.debug
     const originalConsoleDebug = console.debug;
     console.debug = function(...args: any[]) {
-      // Silently ignore automation-related debug messages
       return;
     };
     
-    // Mock chrome runtime
     if (!(window as any).chrome) {
       (window as any).chrome = {};
     }
@@ -245,13 +235,11 @@ async function injectAdvancedStealthScripts(page: Page): Promise<void> {
       };
     }
     
-    // Override permission API
     if (navigator.permissions && navigator.permissions.query) {
       const originalQuery = navigator.permissions.query;
       navigator.permissions.query = function(parameters: any) {
         return originalQuery.call(this, parameters).then((result: any) => {
           if (parameters.name === 'notifications') {
-            // Create a new object instead of modifying read-only property
             return {
               ...result,
               state: 'denied'
@@ -262,7 +250,6 @@ async function injectAdvancedStealthScripts(page: Page): Promise<void> {
       };
     }
     
-    // Random canvas fingerprint - FIXED LINE
     const getImageData = CanvasRenderingContext2D.prototype.getImageData;
     CanvasRenderingContext2D.prototype.getImageData = function(sx: number, sy: number, sw: number, sh: number, settings?: ImageDataSettings) {
       const imageData = getImageData.call(this, sx, sy, sw, sh, settings);
@@ -278,17 +265,13 @@ async function injectAdvancedStealthScripts(page: Page): Promise<void> {
 
 async function simulateAdvancedHumanBehavior(page: Page): Promise<void> {
   try {
-    // Initial random wait
     await page.waitForTimeout(1000 + Math.random() * 3000);
-    
-    // Multiple realistic mouse movements
     for (let i = 0; i < 3 + Math.floor(Math.random() * 3); i++) {
       const startX = Math.random() * 1280;
       const startY = Math.random() * 720;
       const endX = Math.random() * 1280;
       const endY = Math.random() * 720;
       
-      // Curved mouse movement simulation
       const steps = 10 + Math.floor(Math.random() * 20);
       for (let step = 0; step < steps; step++) {
         const progress = step / steps;
@@ -299,7 +282,6 @@ async function simulateAdvancedHumanBehavior(page: Page): Promise<void> {
       }
     }
     
-    // Realistic scrolling patterns
     const scrollSteps = 5 + Math.floor(Math.random() * 10);
     for (let i = 0; i < scrollSteps; i++) {
       await page.evaluate((offset) => {
@@ -308,7 +290,6 @@ async function simulateAdvancedHumanBehavior(page: Page): Promise<void> {
       await page.waitForTimeout(300 + Math.random() * 700);
     }
     
-    // Random click on safe area (body, avoiding interactive elements)
     if (Math.random() > 0.7) {
       try {
         await page.click('body', { 
@@ -319,12 +300,10 @@ async function simulateAdvancedHumanBehavior(page: Page): Promise<void> {
           timeout: 1000
         });
       } catch (clickErr) {
-        // Ignore click errors
       }
       await page.waitForTimeout(500 + Math.random() * 1000);
     }
     
-    // Hover over random elements occasionally
     if (Math.random() > 0.8) {
       try {
         const elements = await page.$$('div, span, p');
@@ -334,16 +313,13 @@ async function simulateAdvancedHumanBehavior(page: Page): Promise<void> {
           await page.waitForTimeout(500 + Math.random() * 1000);
         }
       } catch (hoverErr) {
-        // Ignore hover errors
       }
     }
     
-    // Final scroll to top
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(1000 + Math.random() * 2000);
     
   } catch (err: unknown) {
-    // Continue silently on any errors
   }
 }
 
@@ -430,11 +406,8 @@ async function scrapePage(pageNum: number, userAgent: string, attempt?: number):
     });
     
     page = await context.newPage();
-    
-    // Inject advanced stealth scripts
     await injectAdvancedStealthScripts(page);
 
-    // Cookie injection
     try {
       const cookiesPath = path.join(__dirname, 'cookies_dexscreener.json');
       if (fs.existsSync(cookiesPath)) {
@@ -448,8 +421,6 @@ async function scrapePage(pageNum: number, userAgent: string, attempt?: number):
         });
         await context.addCookies(cookies);
       }
-      
-      // Add some session cookies to appear like a returning user
       await context.addCookies([
         {
           name: 'session_token',
@@ -475,8 +446,6 @@ async function scrapePage(pageNum: number, userAgent: string, attempt?: number):
 
     const url = `https://dexscreener.com/solana/page-${pageNum}?order=asc&rankBy=pairAge`;
     console.log(`Navigating to Solana page ${pageNum}...`);
-    
-    // Multi-stage navigation approach
     try {
       await page.goto(url, { timeout: 30000, waitUntil: 'networkidle' });
     } catch (err: unknown) {
@@ -489,10 +458,7 @@ async function scrapePage(pageNum: number, userAgent: string, attempt?: number):
       }
     }
 
-    // Extended wait with multiple check intervals
     await page.waitForTimeout(8000);
-    
-    // Additional wait if page seems to be loading slowly
     const pageLoadState = await page.evaluate(() => document.readyState);
     if (pageLoadState !== 'complete') {
       console.log('Page not fully loaded, waiting additional time...');
@@ -512,10 +478,7 @@ async function scrapePage(pageNum: number, userAgent: string, attempt?: number):
       throw new Error('Access denied or Cloudflare challenge detected');
     }
 
-    // Advanced human behavior simulation
     await simulateAdvancedHumanBehavior(page);
-    
-    // Wait for table with multiple fallback strategies
     try {
       await page.waitForSelector('.ds-dex-table-row-base-token-name', { timeout: 15000 });
     } catch (selectorErr) {
@@ -685,7 +648,7 @@ async function scraper() {
     consecutiveFailures = 0;
     lastSuccessfulScrape = Date.now();
     const scrapeDuration = Date.now() - attemptStartTime;
-    console.log(`🎉 Solana scrape successful! Found ${allTokens.length} fresh tokens in ${scrapeDuration}ms`);
+    console.log(`Solana scrape successful! Found ${allTokens.length} fresh tokens in ${scrapeDuration}ms`);
     return true;
     
   } catch (err: unknown) {
@@ -754,7 +717,7 @@ async function scraperWithRetry(): Promise<void> {
     const success = await runSingleScrape();
     
     if (success) {
-      console.log('🎉 Solana token scrape successful, resetting failure count');
+      console.log('Solana token scrape successful, resetting failure count');
       consecutiveFailures = 0;
       return;
     }
@@ -792,7 +755,7 @@ async function healthCheck(): Promise<boolean> {
 }
 
 async function startScraper(): Promise<void> {
-  console.log('🚀 Starting Solana Fresh Token Scraper...');
+  console.log('Starting Solana Fresh Token Scraper...');
   
   if (scraperInterval) {
     clearInterval(scraperInterval);
@@ -800,9 +763,9 @@ async function startScraper(): Promise<void> {
   }
   
   if (await healthCheck()) {
-    console.log('✅ Tor control port is accessible');
+    console.log('Tor control port is accessible');
   } else {
-    console.log('⚠️ Tor control port is not accessible. Continuing anyway...');
+    console.log('Tor control port is not accessible. Continuing anyway...');
   }
   
   await scraperWithRetry();

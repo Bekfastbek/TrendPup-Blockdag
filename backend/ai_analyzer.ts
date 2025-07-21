@@ -8,34 +8,22 @@ dotenv.config({ path: path.resolve(__dirname, '/home/trendpup/trendpup/.env') })
 const TWEETS_FILE = 'tweets.json';
 export const OUTPUT_FILE = 'ai_analyzer.json';
 export const SOLANA_TOKENS = 'solana_tokens.json';
-
-// IO.NET Intelligence API configuration
 const IO_INTELLIGENCE_API_KEY = process.env.IOINTEL_API_KEY || '';
 
-// Initialize IO.NET Intelligence API client (OpenAI compatible)
 const ioClient = new OpenAI({
   apiKey: IO_INTELLIGENCE_API_KEY,
   baseURL: 'https://api.intelligence.io.solutions/api/v1/',
 });
 
-// Track last modification time of token file
 let lastTokensModified = 0;
-
-// Prevent multiple sessions
 let isAnalyzerRunning = false;
 let analysisSessionId = 0;
-
-// Market data sync configuration
 const MARKET_DATA_UPDATE_INTERVAL = 10000; // 10 seconds
 let isMarketDataSyncing = false;
 let marketDataSyncInterval: NodeJS.Timeout | null = null;
-
-// Rate limiting configuration
 const RATE_LIMIT_DELAY = 12000; // 12 seconds between API calls
 const RETRY_DELAY = 30000; // 30 seconds on rate limit
 const MAX_RETRIES = 3;
-
-// Simplified interface matching frontend expectations
 interface SimplifiedTokenAnalysis {
   symbol: string;
   symbol1?: string;
@@ -43,7 +31,6 @@ interface SimplifiedTokenAnalysis {
   investmentPotential: number;     // 1-10 (10 = highest potential)
   rationale: string;
   
-  // Market data for frontend
   price: number;
   volume: string;
   marketCap: string;
@@ -51,41 +38,31 @@ interface SimplifiedTokenAnalysis {
   age: string;
   href: string;
   
-  // Analysis metadata
   lastAnalyzed: string;
-  rawRiskScore?: number; // Store original score for relative calculation
+  rawRiskScore?: number;
 }
 
-// Function to sync latest market data from solana_tokens.json to ai_analyzer.json
 async function syncMarketDataToAnalyzer(): Promise<void> {
   if (isMarketDataSyncing) {
-    return; // Prevent overlapping syncs
+    return;
   }
   
   isMarketDataSyncing = true;
   
   try {
-    // Read fresh market data from solana_tokens.json
     if (!fs.existsSync(SOLANA_TOKENS)) {
       return;
     }
-    
     const freshTokenData = JSON.parse(fs.readFileSync(SOLANA_TOKENS, 'utf8'));
-    
-    // Read existing analysis results
     if (!fs.existsSync(OUTPUT_FILE)) {
       return;
     }
-    
     const analysisData = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
-    
     if (!analysisData.results || !Array.isArray(analysisData.results)) {
       return;
     }
-    
+
     let updatedCount = 0;
-    
-    // Update market data for each analyzed token
     analysisData.results = analysisData.results.map((result: any) => {
       const freshTokenInfo = freshTokenData.tokens?.find((t: any) => t.symbol === result.symbol);
       
@@ -103,74 +80,56 @@ async function syncMarketDataToAnalyzer(): Promise<void> {
           return isNaN(change) ? 0 : change;
         };
         
-        // Update ONLY market data fields, keep AI analysis scores intact
         const updatedResult = {
           ...result,
-          // Fresh market data from solana_tokens.json
           price: freshTokenInfo.price ? parsePrice(freshTokenInfo.price) : result.price,
           volume: freshTokenInfo.volume || result.volume,
           marketCap: freshTokenInfo.mcap || result.marketCap,
           change24h: freshTokenInfo['change-24h'] ? parseChange(freshTokenInfo['change-24h']) : result.change24h,
           age: freshTokenInfo.age || result.age,
           href: freshTokenInfo.href || result.href,
-          
-          // Keep AI analysis data unchanged
           risk: result.risk,
           potential: result.potential,
-          // Don't update lastAnalyzed when just syncing market data
         };
         
         updatedCount++;
         return updatedResult;
       }
       
-      return result; // No fresh data available, keep as is
+      return result;
     });
     
-    // Write updated analysis back to ai_analyzer.json
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(analysisData, null, 2));
-    
     if (updatedCount > 0) {
-      console.log(`📊 Market data synced: ${updatedCount} tokens updated in ai_analyzer.json`);
+      console.log(`Market data synced: ${updatedCount} tokens updated in ai_analyzer.json`);
     }
-    
   } catch (error) {
-    console.error('❌ Error syncing market data to analyzer:', error);
+    console.error('Error syncing market data to analyzer:', error);
   } finally {
     isMarketDataSyncing = false;
   }
 }
 
-// Function to start the market data sync process
 function startMarketDataSync(): void {
-  console.log('🔄 Starting market data sync (10s intervals)...');
-  
-  // Initial sync
   syncMarketDataToAnalyzer();
-  
-  // Set up interval for continuous syncing
   marketDataSyncInterval = setInterval(() => {
     syncMarketDataToAnalyzer();
   }, MARKET_DATA_UPDATE_INTERVAL);
 }
 
-// Function to stop the market data sync
 function stopMarketDataSync(): void {
   if (marketDataSyncInterval) {
     clearInterval(marketDataSyncInterval);
     marketDataSyncInterval = null;
-    console.log('🛑 Market data sync stopped');
   }
 }
 
-// Rate limiting utility
 async function rateLimitedDelay(retryCount: number = 0): Promise<void> {
   const delay = retryCount > 0 ? RETRY_DELAY * Math.pow(2, retryCount - 1) : RATE_LIMIT_DELAY;
-  console.log(`⏳ Rate limit delay: ${delay}ms`);
+  console.log(`Rate limit delay: ${delay}ms`);
   await new Promise(res => setTimeout(res, delay));
 }
 
-// Utility functions for parsing
 function parseNumericValue(valueStr: string): number {
   if (!valueStr || valueStr === 'N/A' || valueStr === '-') return 0;
   
@@ -208,7 +167,6 @@ function parseAge(ageStr: string): number {
   }
 }
 
-// Calculate relative memecoin risk factors
 function calculateMemecoinRiskFactors(tokenInfo: any): {
   liquidityRisk: number,
   volatilityRisk: number,
@@ -221,7 +179,6 @@ function calculateMemecoinRiskFactors(tokenInfo: any): {
   const age = parseAge(tokenInfo.age || '1d');
   const change24h = Math.abs(parseFloat(tokenInfo['change-24h']?.replace(/[^\d.-]/g, '') || '0'));
   
-  // Calculate individual risk components (0-5 scale each)
   let liquidityRisk = 0;
   if (liquidity < 5000) liquidityRisk = 5;
   else if (liquidity < 20000) liquidityRisk = 4;
@@ -236,7 +193,6 @@ function calculateMemecoinRiskFactors(tokenInfo: any): {
   else if (change24h > 50) volatilityRisk = 2;
   else if (change24h > 20) volatilityRisk = 1;
   
-  // Age risk - very new tokens are riskier
   let ageRisk = 0;
   const ageInHours = age / 3600;
   if (ageInHours < 1) ageRisk = 5;
@@ -245,7 +201,6 @@ function calculateMemecoinRiskFactors(tokenInfo: any): {
   else if (ageInHours < 168) ageRisk = 2; // 1 week
   else if (ageInHours < 720) ageRisk = 1; // 1 month
   
-  // Volume risk - very low volume is concerning
   let volumeRisk = 0;
   if (volume < 1000) volumeRisk = 5;
   else if (volume < 10000) volumeRisk = 4;
@@ -264,7 +219,6 @@ function calculateMemecoinRiskFactors(tokenInfo: any): {
   };
 }
 
-// Simplified analysis function with retry logic
 async function analyzeTokenSimplified(symbol: string, tweets: any[], tokenInfo: any, retryCount: number = 0): Promise<SimplifiedTokenAnalysis | null> {
   if (!tokenInfo) {
     console.log(`Token ${symbol} not found in token file. Skipping analysis.`);
@@ -274,7 +228,6 @@ async function analyzeTokenSimplified(symbol: string, tweets: any[], tokenInfo: 
   const tokenInfoStr = tokenInfo ? `Token Data: ${JSON.stringify(tokenInfo, null, 2)}\n` : '';
   const tweetsText = tweets.map(t => t.text).slice(0, 10).join(' | ');
   
-  // Calculate base risk factors
   const riskFactors = calculateMemecoinRiskFactors(tokenInfo);
   
   const simplifiedPrompt = `
@@ -318,7 +271,7 @@ RESPOND WITH VALID JSON ONLY:
           content: simplifiedPrompt
         }
       ],
-      temperature: 0.2, // Lower temperature for more consistent scoring
+      temperature: 0.2, // IMPORTANT TO REMOVE HALLUCINATIONS
       max_tokens: 600,
       stream: false
     });
@@ -333,7 +286,7 @@ RESPOND WITH VALID JSON ONLY:
     try {
       parsed = match ? JSON.parse(match[0]) : JSON.parse(text);
     } catch (e) {
-      console.error(`❌ JSON parsing error for ${symbol}:`, e);
+      console.error(`JSON parsing error for ${symbol}:`, e);
       return null;
     }
     
@@ -342,7 +295,6 @@ RESPOND WITH VALID JSON ONLY:
       return null;
     }
 
-    // Parse market data
     const parsePrice = (priceStr: string): number => {
       const cleaned = priceStr.replace(/,/g, '').replace(/[^\d.-]/g, '');
       const price = parseFloat(cleaned);
@@ -362,11 +314,8 @@ RESPOND WITH VALID JSON ONLY:
     const change24h = tokenInfo?.['change-24h'] ? parseChange(tokenInfo['change-24h']) : 0;
     const age = tokenInfo?.age || 'N/A';
 
-    // Store both AI assessment and fundamental risk factors
     const aiRisk = Math.max(1, Math.min(10, parsed.risk || 5));
     const fundamentalRisk = Math.max(1, Math.min(10, (riskFactors.totalRawRisk / 20) * 10)); // Normalize to 1-10
-    
-    // Combine AI assessment with fundamental factors (weighted average)
     const combinedRisk = Math.round((aiRisk * 0.6 + fundamentalRisk * 0.4) * 10) / 10;
 
     return {
@@ -375,9 +324,7 @@ RESPOND WITH VALID JSON ONLY:
       risk: combinedRisk,
       investmentPotential: Math.max(1, Math.min(10, parsed.potential || 1)),
       rationale: parsed.rationale || 'Analysis completed',
-      rawRiskScore: combinedRisk, // Store for relative calculations later
-      
-      // Market data for frontend
+      rawRiskScore: combinedRisk,
       price,
       volume,
       marketCap,
@@ -389,11 +336,10 @@ RESPOND WITH VALID JSON ONLY:
     };
 
   } catch (e: any) {
-    console.error(`❌ Analysis error for ${symbol}:`, e);
-    
+    console.error(`Analysis error for ${symbol}:`, e);
     if (e.status === 429 || e.code === 429 || e.message?.includes('rate limit')) {
       if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Rate limit hit for ${symbol}, retry ${retryCount + 1}/${MAX_RETRIES}`);
+        console.log(`Rate limit hit for ${symbol}, retry ${retryCount + 1}/${MAX_RETRIES}`);
         await rateLimitedDelay(retryCount + 1);
         return analyzeTokenSimplified(symbol, tweets, tokenInfo, retryCount + 1);
       }
@@ -403,11 +349,9 @@ RESPOND WITH VALID JSON ONLY:
   }
 }
 
-// Normalize risk scores to be relative within the analyzed batch
 function normalizeRiskScores(analyses: SimplifiedTokenAnalysis[]): SimplifiedTokenAnalysis[] {
   if (analyses.length < 2) return analyses;
   
-  // Get all raw risk scores
   const rawRisks = analyses.map(a => a.rawRiskScore || a.risk).filter(r => r > 0);
   
   if (rawRisks.length === 0) return analyses;
@@ -415,20 +359,16 @@ function normalizeRiskScores(analyses: SimplifiedTokenAnalysis[]): SimplifiedTok
   const minRisk = Math.min(...rawRisks);
   const maxRisk = Math.max(...rawRisks);
   
-  // If all risks are the same, spread them slightly
   if (maxRisk === minRisk) {
     return analyses.map((analysis, index) => ({
       ...analysis,
-      risk: Math.max(1, Math.min(10, 5 + (Math.random() - 0.5) * 2)) // Random around 5
+      risk: Math.max(1, Math.min(10, 5 + (Math.random() - 0.5) * 2))
     }));
   }
   
-  // Normalize to 1-10 scale, but ensure decent spread
   return analyses.map(analysis => {
     const rawRisk = analysis.rawRiskScore || analysis.risk;
     let normalizedRisk = 1 + ((rawRisk - minRisk) / (maxRisk - minRisk)) * 9;
-    
-    // Add some variance to prevent clustering
     normalizedRisk = Math.max(1, Math.min(10, normalizedRisk + (Math.random() - 0.5) * 0.5));
     
     return {
@@ -438,7 +378,6 @@ function normalizeRiskScores(analyses: SimplifiedTokenAnalysis[]): SimplifiedTok
   });
 }
 
-// Write results with proper normalization
 function writeSimplifiedResults(results: SimplifiedTokenAnalysis[], outputFile: string) {
   if (!results.length) {
     const output = { results: [] };
@@ -446,9 +385,7 @@ function writeSimplifiedResults(results: SimplifiedTokenAnalysis[], outputFile: 
     return;
   }
   
-  // Normalize risk scores to be relative
   const normalizedResults = normalizeRiskScores(results);
-  
   const formattedResults = normalizedResults.map((analysis, index) => ({
     id: index + 1,
     symbol: analysis.symbol,
@@ -464,7 +401,6 @@ function writeSimplifiedResults(results: SimplifiedTokenAnalysis[], outputFile: 
     href: analysis.href
   }));
   
-  // Sort by risk (lowest first), then by potential (highest first)
   formattedResults.sort((a, b) => {
     if (Math.abs(a.risk - b.risk) < 0.1) return b.potential - a.potential;
     return a.risk - b.risk;
@@ -473,10 +409,9 @@ function writeSimplifiedResults(results: SimplifiedTokenAnalysis[], outputFile: 
   const output = { results: formattedResults };
   
   fs.writeFileSync(outputFile, JSON.stringify(output, null, 2));
-  console.log(`✅ Written ${formattedResults.length} normalized analyses`);
+  console.log(`Written ${formattedResults.length} normalized analyses`);
 }
 
-// Utility functions
 function checkTokensUpdated(): boolean {
   try {
     if (!fs.existsSync(SOLANA_TOKENS)) return false;
@@ -498,9 +433,8 @@ function getTokenInfo(symbol: string, tokenData: any): any {
 }
 
 async function main() {
-  // Prevent multiple concurrent sessions
   if (isAnalyzerRunning) {
-    console.log('⏭️ Analyzer already running, skipping...');
+    console.log('Analyzer already running, skipping...');
     return;
   }
   
@@ -508,41 +442,38 @@ async function main() {
   analysisSessionId++;
   const currentSessionId = analysisSessionId;
   
-  console.log(`🚀 Starting AI Analyzer Session #${currentSessionId}`);
+  console.log(`Starting AI Analyzer Session #${currentSessionId}`);
 
-  // START MARKET DATA SYNC IMMEDIATELY
   startMarketDataSync();
 
   let tweetsObj: any = {};
   let tokenData: any = {};
   
   try {
-    // Load data files
     if (!fs.existsSync(TWEETS_FILE)) {
-      console.log('❌ tweets.json not found.');
+      console.log('tweets.json not found.');
       return;
     }
     tweetsObj = JSON.parse(fs.readFileSync(TWEETS_FILE, 'utf8'));
-    console.log(`📄 Loaded tweets for ${Object.keys(tweetsObj).length} symbols`);
+    console.log(`Loaded tweets for ${Object.keys(tweetsObj).length} symbols`);
   } catch (e) {
-    console.error('❌ Error reading tweets.json:', e);
+    console.error('Error reading tweets.json:', e);
     return;
   }
   
   try {
     if (fs.existsSync(SOLANA_TOKENS)) {
       tokenData = JSON.parse(fs.readFileSync(SOLANA_TOKENS, 'utf8'));
-      console.log(`📄 Loaded ${tokenData.tokens?.length || 0} tokens from BSC data`);
+      console.log(`Loaded ${tokenData.tokens?.length || 0} tokens from BSC data`);
     } else {
-      console.log(`❌ ${SOLANA_TOKENS} not found.`);
+      console.log(`${SOLANA_TOKENS} not found.`);
       return;
     }
   } catch (e) {
-    console.error(`❌ Error reading ${SOLANA_TOKENS}:`, e);
+    console.error(`Error reading ${SOLANA_TOKENS}:`, e);
     return;
   }
 
-  // Load existing results
   let analysisResults: SimplifiedTokenAnalysis[] = [];
   try {
     if (fs.existsSync(OUTPUT_FILE)) {
@@ -563,39 +494,35 @@ async function main() {
           href: item.href,
           lastAnalyzed: new Date().toISOString()
         }));
-        console.log(`📊 Loaded ${analysisResults.length} existing analyses`);
+        console.log(`Loaded ${analysisResults.length} existing analyses`);
       }
     }
   } catch (e) {
-    console.error('⚠️ Error reading existing results:', e);
+    console.error('Error reading existing results:', e);
     analysisResults = [];
   }
 
-  // Set initial modification time
   try {
     if (fs.existsSync(SOLANA_TOKENS)) {
       const stats = fs.statSync(SOLANA_TOKENS);
       lastTokensModified = stats.mtimeMs;
     }
   } catch (e) {
-    console.error('⚠️ Error getting token file stats:', e);
+    console.error('Error getting token file stats:', e);
   }
 
-  // Prepare token queue - only tokens that exist in both tweets and token data
   const availableTokens = tokenData?.tokens ? 
     new Set(tokenData.tokens.map((t: any) => t.symbol)) : 
     new Set();
   
   const tokenQueue = Object.keys(tweetsObj).filter(symbol => availableTokens.has(symbol));
   
-  console.log(`🎯 Tokens to analyze: ${tokenQueue.length}`);
-  console.log(`⏱️ Estimated time: ${Math.round((tokenQueue.length * RATE_LIMIT_DELAY) / 1000 / 60)} minutes`);
+  console.log(`Tokens to analyze: ${tokenQueue.length}`);
+  console.log(`Estimated time: ${Math.round((tokenQueue.length * RATE_LIMIT_DELAY) / 1000 / 60)} minutes`);
 
-  // Process tokens with proper rate limiting
   for (let i = 0; i < tokenQueue.length; i++) {
-    // Check if session was superseded
     if (currentSessionId !== analysisSessionId) {
-      console.log('🛑 Session superseded, stopping...');
+      console.log('Session superseded, stopping...');
       break;
     }
     
@@ -608,11 +535,10 @@ async function main() {
       const tokenInfo = getTokenInfo(currentSymbol, tokenData);
       
       if (!tokenInfo) {
-        console.log(`❌ ${currentSymbol} not found in token data. Skipping.`);
+        console.log(`${currentSymbol} not found in token data. Skipping.`);
         continue;
       }
       
-      // Check if already analyzed recently (within 24 hours)
       const existing = analysisResults.find(a => a.symbol === currentSymbol);
       if (existing && existing.lastAnalyzed) {
         const lastAnalyzed = new Date(existing.lastAnalyzed).getTime();
@@ -620,7 +546,7 @@ async function main() {
         const hoursAgo = (now - lastAnalyzed) / (1000 * 60 * 60);
         
         if (hoursAgo < 24) {
-          console.log(`⏭️ ${currentSymbol} analyzed ${Math.round(hoursAgo)}h ago, skipping...`);
+          console.log(`${currentSymbol} analyzed ${Math.round(hoursAgo)}h ago, skipping...`);
           continue;
         }
       }
@@ -632,27 +558,25 @@ async function main() {
         
         if (existingIndex >= 0) {
           analysisResults[existingIndex] = analysis;
-          console.log(`✅ Updated ${currentSymbol} - Risk: ${analysis.risk}/10, Potential: ${analysis.investmentPotential}/10`);
+          console.log(`Updated ${currentSymbol} - Risk: ${analysis.risk}/10, Potential: ${analysis.investmentPotential}/10`);
         } else {
           analysisResults.push(analysis);
-          console.log(`✅ Added ${currentSymbol} - Risk: ${analysis.risk}/10, Potential: ${analysis.investmentPotential}/10`);
+          console.log(`Added ${currentSymbol} - Risk: ${analysis.risk}/10, Potential: ${analysis.investmentPotential}/10`);
         }
         
-        // Write results after each successful analysis
         writeSimplifiedResults(analysisResults, OUTPUT_FILE);
       } else {
-        console.log(`❌ Skipped ${currentSymbol}: Invalid analysis`);
+        console.log(`Skipped ${currentSymbol}: Invalid analysis`);
       }
       
     } catch (e: any) {
       if (e.message === 'RATE_LIMIT_EXCEEDED') {
-        console.log('🛑 Rate limit exceeded. Stopping session.');
+        console.log('Rate limit exceeded. Stopping session.');
         break;
       }
-      console.error(`❌ Error analyzing ${currentSymbol}:`, e.message);
+      console.error(`Error analyzing ${currentSymbol}:`, e.message);
     }
     
-    // Rate limiting delay between requests
     if (i < tokenQueue.length - 1) {
       await rateLimitedDelay();
     }
@@ -662,33 +586,25 @@ async function main() {
   console.log(`📊 Total tokens analyzed: ${analysisResults.length}`);
 
   isAnalyzerRunning = false;
-  
-  // KEEP MARKET DATA SYNC RUNNING after analysis completes
-  console.log('📊 Market data sync continues running for real-time updates...');
 }
 
-// Graceful shutdown handling
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down gracefully...');
   stopMarketDataSync();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Shutting down gracefully...');
   stopMarketDataSync();
   process.exit(0);
 });
 
-// Also stop sync if analyzer exits unexpectedly
 process.on('exit', () => {
   stopMarketDataSync();
 });
 
-// Run once with proper error handling
-console.log('🤖 BSC Memecoin AI Analyzer Starting...');
+console.log('Analyzer Starting...');
 main().catch(error => {
-  console.error('💥 Fatal error:', error);
+  console.error('Fatal error:', error);
   isAnalyzerRunning = false;
   stopMarketDataSync();
 });

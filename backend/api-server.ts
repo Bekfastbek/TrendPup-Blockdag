@@ -8,23 +8,20 @@ const PORT = 3001;
 
 app.use(cors());
 
-// Add middleware to log requests for debugging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Serve ai_analyzer.json as token data with all market data included
 app.get('/api/token-data', (req: Request, res: Response) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   
-  // Try multiple possible file paths
   const possiblePaths = [
-    path.join(__dirname, 'ai_analyzer.json'),           // Same directory as server
-    path.join(__dirname, '../ai_analyzer.json'),        // Parent directory
-    path.join(process.cwd(), 'ai_analyzer.json'),       // Current working directory
+    path.join(__dirname, 'ai_analyzer.json'),
+    path.join(__dirname, '../ai_analyzer.json'),
+    path.join(process.cwd(), 'ai_analyzer.json'),
   ];
   
   let filePath: string | null = null;
@@ -36,7 +33,7 @@ app.get('/api/token-data', (req: Request, res: Response) => {
   }
   
   if (!filePath) {
-    console.error('❌ ai_analyzer.json not found in any of these paths:');
+    console.error('ai_analyzer.json not found in any of these paths:');
     possiblePaths.forEach(p => console.error(`   - ${p}`));
     return res.status(404).json({ 
       error: 'Token data file not found', 
@@ -45,7 +42,7 @@ app.get('/api/token-data', (req: Request, res: Response) => {
     });
   }
   
-  console.log(`📄 Reading token data from: ${filePath}`);
+  console.log(`Reading token data from: ${filePath}`);
   
   try {
     const data = fs.readFileSync(filePath, 'utf8');
@@ -59,7 +56,6 @@ app.get('/api/token-data', (req: Request, res: Response) => {
       topLevelKeys: Object.keys(jsonData)
     });
     
-    // Handle different possible data structures
     let allTokens: any[] = [];
     if (Array.isArray(jsonData.results)) {
       allTokens = jsonData.results;
@@ -76,7 +72,7 @@ app.get('/api/token-data', (req: Request, res: Response) => {
       });
     }
     
-    console.log(`📈 Found ${allTokens.length} total tokens`);
+    console.log(`Found ${allTokens.length} total tokens`);
     
     if (allTokens.length > 0) {
       console.log('🔍 Sample token structure:', {
@@ -85,18 +81,15 @@ app.get('/api/token-data', (req: Request, res: Response) => {
       });
     }
     
-    // Filter out entries that don't have required fields
-    // Note: Using 'potential' instead of 'investmentPotential'
     const completeTokens = allTokens.filter((token: any) => {
       const hasSymbol = token.symbol && typeof token.symbol === 'string';
       const hasRisk = typeof token.risk === 'number' && !isNaN(token.risk);
       const hasPotential = typeof token.potential === 'number' && !isNaN(token.potential);
       
-      // Don't filter by rationale since it's not in the final output
       const isComplete = hasSymbol && hasRisk && hasPotential;
       
       if (!isComplete) {
-        console.log('⚠️ Incomplete token:', {
+        console.log('Incomplete token:', {
           symbol: token.symbol,
           hasSymbol,
           hasRisk,
@@ -109,21 +102,18 @@ app.get('/api/token-data', (req: Request, res: Response) => {
       return isComplete;
     });
     
-    console.log(`✅ Filtered tokens: ${completeTokens.length} out of ${allTokens.length} total`);
+    console.log(`Filtered tokens: ${completeTokens.length} out of ${allTokens.length} total`);
     
-    // Transform data to match frontend expectations if needed
     const transformedTokens = completeTokens.map(token => ({
       ...token,
-      // Ensure we have the right field names
       investmentPotential: token.potential || token.investmentPotential,
-      // Add rationale if missing (for compatibility)
       rationale: token.rationale || `Risk: ${token.risk}/10, Potential: ${token.potential || token.investmentPotential}/10`
     }));
     
     res.json({ results: transformedTokens });
     
   } catch (err) {
-    console.error('❌ Error parsing token data:', err);
+    console.error('Error parsing token data:', err);
     res.status(500).json({ 
       error: 'Failed to parse token data', 
       data: [],
@@ -132,7 +122,6 @@ app.get('/api/token-data', (req: Request, res: Response) => {
   }
 });
 
-// Add a health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'OK', 
@@ -141,7 +130,6 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// Add an endpoint to check file status
 app.get('/api/file-status', (req: Request, res: Response) => {
   const possiblePaths = [
     path.join(__dirname, 'ai_analyzer.json'),
@@ -181,10 +169,8 @@ app.get('/api/file-status', (req: Request, res: Response) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Backend API server running on port ${PORT}`);
-  console.log(`📍 Server directory: ${__dirname}`);
-  console.log(`📍 Working directory: ${process.cwd()}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔗 File status: http://localhost:${PORT}/api/file-status`);
-  console.log(`🔗 Token data: http://localhost:${PORT}/api/token-data`);
+  console.log(`Backend API server running on port ${PORT}`);
+  console.log(`Server directory: ${__dirname}`);
+  console.log(`Working directory: ${process.cwd()}`);
+  console.log(`Token data: http://localhost:${PORT}/api/token-data`);
 });
