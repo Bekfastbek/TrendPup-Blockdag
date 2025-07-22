@@ -1,4 +1,4 @@
-# Sniffle Frontend
+# Trendpup Frontend
 
 Advanced Memecoin Intelligence System for Solana with modern wallet integration.
 
@@ -21,7 +21,7 @@ For development and testing purposes, the application connects to:
 - Currency Symbol: SOL
 - Block Explorer: https://explorer.solana.com/?cluster=devnet
 
-> **Note:** While the development environment uses Solana devnet for wallet connections, Sniffle is designed to track and analyze memecoins on Solana mainnet in production.
+> **Note:** While the development environment uses Solana devnet for wallet connections, Trendpup is designed to track and analyze memecoins on Solana mainnet in production.
 
 ## Getting Started
 
@@ -69,7 +69,7 @@ Make sure your wallet is configured for the Avalanche Fuji testnet.
 
 ## Running the Server
 
-Sniffle uses Next.js with nginx for HTTPS and WebSocket proxying:
+Trendpup uses Next.js with nginx for HTTPS and WebSocket proxying:
 
 1. **Start the Next.js server:**
    ```bash
@@ -80,7 +80,7 @@ Sniffle uses Next.js with nginx for HTTPS and WebSocket proxying:
    This will start Next.js on port 3000.
 
 2. **Access the app:**
-   The application is available at https://sniffle.duckdns.org
+   The application is available at https://trendpup.duckdns.org
 
 ## Nginx Configuration
 
@@ -90,10 +90,10 @@ The application runs behind nginx which:
 - Proxies WebSocket connections at `/ws` to the backend WebSocket server on port 8080
 
 ```nginx
-# Main configuration at /etc/nginx/sites-enabled/sniffle.conf
+# Main configuration at /etc/nginx/sites-enabled/trendpup.conf
 server {
     listen 443 ssl;
-    server_name sniffle.duckdns.org;
+    server_name trendpup.duckdns.org;
 
     # Frontend proxy
     location / {

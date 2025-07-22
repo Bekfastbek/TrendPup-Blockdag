@@ -191,16 +191,16 @@ export default function ChatInterface({ fullPage = false }: ChatInterfaceProps) 
         <div className="bg-solana-purple text-white p-4 flex items-center justify-between">
           <div className="flex items-center">          <div className="flex-shrink-0 mr-3">
             <Image 
-              src="/sniffle-logo.png" 
-              alt="Sniffle Logo" 
+              src="/trendpup-logo.png" 
+              alt="Trendpup Logo" 
               width={32} 
               height={32}
             />
           </div>
             <div>
-              <h1 className="text-xl font-semibold">Sniffle Assistant</h1>
+              <h1 className="text-xl font-semibold">Trendpup Assistant</h1>
               <p className="text-sm opacity-75">
-                Connected to Sniffle Agent - Ready to chat
+                Connected to Trendpup Agent - Ready to chat
               </p>
             </div>
           </div>

@@ -41,7 +41,7 @@ export default function Chat() {
             // Initial connection message
             setMessages(prev => [...prev, {
               type: 'assistant',
-              content: 'Connected to Sniffle Assistant',
+              content: 'Connected to Trendpup Assistant',
               timestamp: new Date()
             }]);
           } else if (data.type === 'message' || data.text) {

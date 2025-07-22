@@ -39,7 +39,7 @@ export default function MemecoinsExplorer() {
       }
       
       // Debug UI: show the data for troubleshooting
-      (window as any)._sniffleDebug = {
+      (window as any)._trendpupDebug = {
         tokenData: data,
         tokenDataLength: data.length,
         dataFormat: validation.format,
@@ -186,7 +186,7 @@ export default function MemecoinsExplorer() {
       <div className="bg-purple-600 text-white rounded-t-xl px-6 py-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Memecoin Explorer</h2>
-          <p className="text-base opacity-90">Discover trending memecoins with Sniffle AI intelligence</p>
+          <p className="text-base opacity-90">Discover trending memecoins with Trendpup AI intelligence</p>
         </div>
         <div className="text-sm opacity-80 flex items-center space-x-2">
           <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>

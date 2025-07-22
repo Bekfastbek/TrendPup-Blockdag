@@ -452,12 +452,12 @@ export default function Home() {
               </button>
             </div>
             <div className="p-6 overflow-auto max-h-[500px]">
-              <h1 className="text-2xl font-bold text-gray-800 mb-3">Sniffle: Advanced Memecoin Intelligence System for Solana</h1>
+              <h1 className="text-2xl font-bold text-gray-800 mb-3">Trendpup: Advanced Memecoin Intelligence System for Solana</h1>
               
               <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Executive Summary</h2>
               <div className="prose prose-sm">
-                <p className="mb-3">Sniffle is a revolutionary AI-powered platform engineered specifically for the Solana ecosystem, providing traders with unprecedented early access to emerging meme tokens before significant price movements occur. By leveraging advanced AI analysis and conversational intelligence, Sniffle synthesizes sophisticated social media analytics with on-chain Solana data to identify high-potential opportunities during their inception phase, allowing users to position themselves advantageously in the market.</p>
-                <p className="mb-3">Our platform democratizes access to valuable pre-pump intelligence previously available only to well-connected insiders and sophisticated traders within the Solana ecosystem. Sniffle's unique profit-sharing business model aligns our incentives directly with user success, creating a symbiotic relationship where we only succeed when our users profit.</p>
+                <p className="mb-3">Trendpup is a revolutionary AI-powered platform engineered specifically for the Solana ecosystem, providing traders with unprecedented early access to emerging meme tokens before significant price movements occur. By leveraging advanced AI analysis and conversational intelligence, Trendpup synthesizes sophisticated social media analytics with on-chain Solana data to identify high-potential opportunities during their inception phase, allowing users to position themselves advantageously in the market.</p>
+                <p className="mb-3">Our platform democratizes access to valuable pre-pump intelligence previously available only to well-connected insiders and sophisticated traders within the Solana ecosystem. Trendpup's unique profit-sharing business model aligns our incentives directly with user success, creating a symbiotic relationship where we only succeed when our users profit.</p>
               </div>
 
               <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Technology Infrastructure</h2>
@@ -523,7 +523,7 @@ export default function Home() {
 
               <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Contact Information</h2>
               <div className="prose prose-sm">
-                <p className="italic mt-4">Email: tanishqgupta322@gmail.com | Twitter: @Sniffle_AI | Discord: Coming Soon</p>
+                <p className="italic mt-4">Email: tanishqgupta322@gmail.com | Twitter: @Trendpup_AI | Discord: Coming Soon</p>
               </div>
             </div>
             {/* Resize handle */}
@@ -568,7 +568,7 @@ export default function Home() {
             </div>
             <div className="p-6 text-center">
               <Image 
-                src="/sniffle-logo.png" 
+                src="/trendpup-logo.png" 
                 alt="Wallet" 
                 width={80} 
                 height={80}
@@ -651,8 +651,8 @@ export default function Home() {
           <div className="bg-white/95 rounded-3xl shadow-2xl border border-solana-purple/10 p-8 md:p-12 max-w-md w-full text-center">
             <div className="flex justify-center mb-6">
               <Image 
-                src="/sniffle-logo.png" 
-                alt="Sniffle Logo" 
+                src="/trendpup-logo.png" 
+                alt="Trendpup Logo" 
                 width={200} 
                 height={200}
                 priority
@@ -660,7 +660,7 @@ export default function Home() {
               />
             </div>
             
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Sniffle AI</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Trendpup AI</h1>
             <p className="text-gray-600 mb-8 md:mb-10 text-sm">
               An autonomous AI agent that finds trending memecoins on Solana.
             </p>
@@ -785,13 +785,13 @@ export default function Home() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center p-12 bg-white/90 rounded-2xl shadow-lg max-w-md border-2 border-solana-purple">
                   <Image 
-                    src="/sniffle-logo.png" 
-                    alt="Sniffle Logo" 
+                    src="/trendpup-logo.png" 
+                    alt="Trendpup Logo" 
                     width={100} 
                     height={100}
                     className="mx-auto mb-4" 
                   />
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Sniffle</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Trendpup</h2>
                   <p className="text-gray-600 mb-6">Advanced Memecoin Intelligence for Solana - Click on the menu items on the left to get started</p>
                 </div>
               </div>
