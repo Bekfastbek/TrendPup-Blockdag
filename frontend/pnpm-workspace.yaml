@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - bufferutil
+  - keccak
+  - postinstall-postinstall
+  - protobufjs
+  - secp256k1
+  - utf-8-validate
