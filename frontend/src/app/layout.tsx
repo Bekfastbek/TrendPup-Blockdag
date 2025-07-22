@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit';
 import { useState } from 'react';
+import { AccessControlProvider } from './components/AccessControlProvider';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -65,7 +66,9 @@ export default function RootLayout({
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
             <RainbowKitProvider modalSize="compact">
-              {children}
+              <AccessControlProvider>
+                {children}
+              </AccessControlProvider>
             </RainbowKitProvider>
           </QueryClientProvider>
         </WagmiProvider>

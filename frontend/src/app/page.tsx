@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FaTimes, FaDog, FaChartLine, FaWallet, FaFileAlt, FaComments, FaChartBar, FaPlug, FaExpand } from 'react-icons/fa';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { AccessGate } from './components/AccessControlProvider';
 import ChatInterface from './components/ChatInterface';
 import MemecoinsExplorer from './components/MemecoinsExplorer';
 
@@ -28,7 +29,7 @@ interface OpenWindow {
   zIndex: number;
 }
 
-export default function Home() {
+export default function HomePage() {
   const { address, isConnected } = useAccount();
   const [appStarted, setAppStarted] = useState(false);
   const [chatMode, setChatMode] = useState(false);
@@ -641,60 +642,61 @@ export default function Home() {
   };
 
   const renderLandingPage = () => {
-      return (
-        <div className="flex items-center justify-center min-h-screen p-4">
-          <div className="bg-white/95 rounded-3xl shadow-2xl border border-solana-purple/10 p-8 md:p-12 max-w-md w-full text-center">
-            <div className="flex justify-center mb-6">
-              <Image 
-                src="/trendpup-logo.png" 
-                alt="Trendpup Logo" 
-                width={200} 
-                height={200}
-                priority
-                className="rounded-full"
-              />
-            </div>
-            
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Trendpup AI</h1>
-            <p className="text-gray-600 mb-8 md:mb-10 text-sm">
-              An autonomous AI agent that finds trending memecoins on Solana.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="bg-white/95 rounded-3xl shadow-2xl border border-solana-purple/10 p-8 md:p-12 max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <Image 
+              src="/trendpup-logo.png" 
+              alt="Trendpup Logo" 
+              width={200} 
+              height={200}
+              priority
+              className="rounded-full"
+            />
+          </div>
+          
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Trendpup AI</h1>
+          <p className="text-gray-600 mb-8 md:mb-10 text-sm">
+            An autonomous AI agent that finds trending memecoins on Solana.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+            onClick={(e) => {
+              e.stopPropagation();
+                setAppStarted(true);
+                setChatMode(false);
+              // Open dashboard and chat windows automatically
+              setTimeout(() => {
+                openMultipleWindows([]);
+              }, 100);
+              }}
+              className="px-6 md:px-8 py-3 bg-solana-gradient text-white rounded-lg font-medium hover:bg-solana-gradient-hover transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-solana-purple/30"
+            >
+              Get Started
+            </button>
+            <button 
               onClick={(e) => {
                 e.stopPropagation();
-                  setAppStarted(true);
-                  setChatMode(false);
-                // Open dashboard and chat windows automatically
+                setAppStarted(true);
+                setChatMode(true);
                 setTimeout(() => {
-                  openMultipleWindows([]);
+                  toggleWindow('chat');
                 }, 100);
-                }}
-                className="px-6 md:px-8 py-3 bg-solana-gradient text-white rounded-lg font-medium hover:bg-solana-gradient-hover transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-solana-purple/30"
-              >
-                Get Started
-              </button>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAppStarted(true);
-                  setChatMode(true);
-                  setTimeout(() => {
-                    toggleWindow('chat');
-                  }, 100);
-                }}
-                className="px-6 md:px-8 py-3 bg-purple-100 text-solana-purple rounded-lg font-medium hover:bg-purple-200 transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                Chat Mode
-              </button>
-            </div>
+              }}
+              className="px-6 md:px-8 py-3 bg-purple-100 text-solana-purple rounded-lg font-medium hover:bg-purple-200 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Chat Mode
+            </button>
           </div>
         </div>
-      );
+      </div>
+    );
   };
 
-      return (
+  return (
+    <AccessGate>
       <main 
         ref={containerRef}
         className="min-h-screen dashboard-bg relative overflow-hidden"
@@ -793,8 +795,7 @@ export default function Home() {
             )}
           </>
         )}
-
-        {/* Debug info - remove in production */}
       </main>
+    </AccessGate>
   );
 }

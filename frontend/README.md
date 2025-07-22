@@ -1,27 +1,76 @@
-# Trendpup Frontend
 
-Advanced Memecoin Intelligence System for Solana with modern wallet integration.
+# Trendpup: AI-Powered Memecoin Intelligence & BlockDAG Subscription System
+
+Trendpup is an advanced AI agent that finds trending memecoins by combining real-time social media analysis, on-chain data, and conversational intelligence. It is built for next-gen EVM-compatible chains and leverages BlockDAG smart contracts for access control and subscriptions.
+
+## How Trendpup Works
+
+- **AI Agent for Memecoin Discovery:**
+  - Continuously scrapes Twitter/X and other social platforms for early mentions of new tokens.
+  - Uses advanced filtering (engagement, credibility, semantic analysis) to surface authentic, high-potential meme tokens.
+  - Aggregates on-chain data (DEX listings, liquidity, price action) and social sentiment.
+  - AI models analyze risk, investment potential, and provide rationale for each token.
+  - Users interact with the agent via chat to get real-time insights and ask questions about tokens.
+
+- **BlockDAG Smart Contract Integration:**
+  - Trendpup uses the BlockDAG Primordial Testnet for its subscription system.
+  - Access to the dashboard and AI agent is gated by a BlockDAG smart contract (`SimpleAccessFee`).
+  - Users pay a small fee (1 ETH on testnet) to unlock full access; the contract tracks paid users.
+  - The frontend uses RainbowKit and wagmi to connect wallets and interact with the contract.
+
+- **Solana Memecoin Showcase:**
+  - As BlockDAG does not yet have memecoins, Trendpup currently showcases its capabilities using Solana memecoins.
+  - All analytics, chat, and explorer features use Solana data as a sample.
+  - Once BlockDAG memecoins launch, Trendpup will shift to native BlockDAG token support.
+
+## Hackathon Context: BlockDAG Primordial Testnet
+
+Trendpup is submitted to the BlockDAG Primordial Testnet hackathon in the "AI × Smart Contracts" and "DeFi, Reinvented" categories.
+
+- **Why BlockDAG?**
+  - BlockDAG is a modular, EVM-compatible chain designed for high performance and composability.
+  - Trendpup leverages BlockDAG for programmable access control, subscription payments, and future memecoin analytics.
+  - The subscription system is fully on-chain, demonstrating real-world utility for dApps and AI agents.
+
+- **Future Vision:**
+  - As BlockDAG's ecosystem grows, Trendpup will support native memecoin discovery, analytics, and trading.
+  - The AI agent and dashboard are chain-agnostic and ready for rapid migration.
 
 ## Features
 
-- Real-time chat with AI assistant
-- Solana memecoin tracking and analytics
-- Solana wallet connection (Phantom, Solflare, Backpack, Coinbase, etc.)
-- Memecoin explorer and tracking
-- Responsive UI using Tailwind CSS
-- Dashboard with multiple windows interface
+- Real-time chat with AI agent for memecoin insights
+- Memecoin explorer and analytics (currently Solana, future BlockDAG)
+- BlockDAG smart contract subscription system
+- Modern wallet integration (RainbowKit, wagmi)
+- Responsive, multi-window dashboard UI
 
-## Development Network
+## Getting Started
 
-For development and testing purposes, the application connects to:
+1. Install dependencies:
 
-**Solana Devnet:**
-- Network Name: Solana Devnet
-- RPC URL: https://api.devnet.solana.com
-- Currency Symbol: SOL
-- Block Explorer: https://explorer.solana.com/?cluster=devnet
+```bash
+pnpm install
+```
 
-> **Note:** While the development environment uses Solana devnet for wallet connections, Trendpup is designed to track and analyze memecoins on Solana mainnet in production.
+2. Build the application:
+
+```bash
+pnpm run build
+```
+
+3. Start the production server:
+
+```bash
+pnpm start
+```
+
+Or run in development mode:
+
+```bash
+pnpm run dev
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Getting Started
 
