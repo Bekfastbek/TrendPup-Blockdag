@@ -1,7 +1,10 @@
 onlyBuiltDependencies:
+  - blake-hash
   - bufferutil
   - keccak
   - postinstall-postinstall
   - protobufjs
   - secp256k1
+  - tiny-secp256k1
+  - usb
   - utf-8-validate
