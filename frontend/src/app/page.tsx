@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { FaTimes, FaDog, FaChartLine, FaWallet, FaFileAlt, FaComments, FaChartBar, FaPlug, FaExpand } from 'react-icons/fa';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useAccount } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import ChatInterface from './components/ChatInterface';
 import MemecoinsExplorer from './components/MemecoinsExplorer';
-import SolanaWalletButton from './components/SolanaWalletButton';
 
 // Window position interface
 interface WindowPosition {
@@ -29,7 +29,7 @@ interface OpenWindow {
 }
 
 export default function Home() {
-  const { connected, publicKey, disconnect } = useWallet();
+  const { address, isConnected } = useAccount();
   const [appStarted, setAppStarted] = useState(false);
   const [chatMode, setChatMode] = useState(false);
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
@@ -575,25 +575,20 @@ export default function Home() {
                 className="mx-auto mb-4" 
               />
               <h2 className="text-xl font-bold text-gray-800 mb-2">Connect Your Wallet</h2>
-              {connected ? (
+              {isConnected ? (
                 <div className="space-y-4">
-                  <p className="text-gray-600">Connected to Solana Devnet</p>
+                  <p className="text-gray-600">Connected to BlockDAG Testnet</p>
                   <p className="text-gray-600">Address:</p>
                   <p className="font-mono text-sm bg-gray-100 p-2 rounded break-all">
-                    {publicKey?.toBase58()}
+                    {address}
                   </p>
-                  <button 
-                    onClick={() => disconnect()}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
-                  >
-                    Disconnect
-                  </button>
+                  {/* Disconnect handled by RainbowKit UI */}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-600 mb-6">Connect your wallet to Solana devnet to track your memecoin investments</p>
+                  <p className="text-gray-600 mb-6">Connect your wallet to BlockDAG Testnet to track your memecoin investments</p>
                   <div className="flex justify-center">
-                    <SolanaWalletButton />
+                    <ConnectButton chainStatus="icon" showBalance={false} />
                   </div>
                 </div>
               )}
@@ -735,7 +730,7 @@ export default function Home() {
 
               {/* Connect Button */}
               <div className="p-2 rounded-lg shadow-lg bg-white">
-                <SolanaWalletButton />
+                <ConnectButton chainStatus="icon" showBalance={false} />
               </div>
             </div>
 
