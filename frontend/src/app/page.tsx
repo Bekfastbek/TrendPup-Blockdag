@@ -453,72 +453,29 @@ export default function HomePage() {
               </button>
             </div>
             <div className="p-6 overflow-auto max-h-[500px]">
-              <h1 className="text-2xl font-bold text-gray-800 mb-3">Trendpup: Advanced Memecoin Intelligence System for Solana</h1>
-              
+
+              <h1 className="text-2xl font-bold text-gray-800 mb-3">Trendpup: AI-Powered Memecoin Intelligence & BlockDAG Smart Contract Access</h1>
+
               <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Executive Summary</h2>
               <div className="prose prose-sm">
-                <p className="mb-3">Trendpup is a revolutionary AI-powered platform engineered specifically for the Solana ecosystem, providing traders with unprecedented early access to emerging meme tokens before significant price movements occur. By leveraging advanced AI analysis and conversational intelligence, Trendpup synthesizes sophisticated social media analytics with on-chain Solana data to identify high-potential opportunities during their inception phase, allowing users to position themselves advantageously in the market.</p>
-                <p className="mb-3">Our platform democratizes access to valuable pre-pump intelligence previously available only to well-connected insiders and sophisticated traders within the Solana ecosystem. Trendpup's unique profit-sharing business model aligns our incentives directly with user success, creating a symbiotic relationship where we only succeed when our users profit.</p>
+                <p className="mb-3">Trendpup is an advanced AI agent for BlockDAG that discovers trending memecoins using real-time social media analysis, on-chain data, and conversational intelligence. Access to premium features is gated by a BlockDAG smart contract (<code>SimpleAccessFee</code>), with wallet connection and payment handled via RainbowKit and wagmi.</p>
+                <p className="mb-3">Trendpup is a submission to the BlockDAG Primordial Testnet hackathon ("AI × Smart Contracts" and "DeFi, Reinvented" categories), demonstrating real-world utility for dApps and AI agents with fully on-chain subscription and access control.</p>
               </div>
 
-              <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Technology Infrastructure</h2>
-              
-              <h3 className="text-lg font-semibold text-gray-800 mt-4 mb-2">Real-Time Data Acquisition Network</h3>
+              <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">How Trendpup Works</h2>
               <div className="prose prose-sm">
                 <ul className="list-disc pl-5 mb-4">
-                  <li><strong>Solana-Focused Social Listening:</strong> Proprietary system continuously monitors Twitter/X for early mentions of emerging Solana meme tokens</li>
-                  <li><strong>Advanced Filtering Matrix:</strong>
-                    <ul className="list-disc pl-5 mt-1">
-                      <li>Engagement threshold verification (filtering for authentic interaction patterns)</li>
-                      <li>Account credibility scoring (bot detection and influence assessment)</li>
-                      <li>Solana-specific semantic analysis (context-aware keyword processing for SOL ecosystem)</li>
-                      <li>Temporal signal amplification detection (identifying organic growth patterns on Solana)</li>
-                    </ul>
-                  </li>
-                  <li><strong>Operational Parameters:</strong> High-frequency scanning at 3-5 minute intervals with intelligent rate limiting to ensure comprehensive coverage</li>
+                  <li><strong>AI Agent for Memecoin Discovery:</strong> Continuously scrapes Twitter/X and other social platforms for early mentions of new tokens. Uses advanced filtering (engagement, credibility, semantic analysis) to surface authentic, high-potential meme tokens. Aggregates on-chain data (DEX listings, liquidity, price action) and social sentiment. AI models analyze risk, investment potential, and provide rationale for each token. Users interact with the agent via chat to get real-time insights and ask questions about tokens.</li>
+                  <li><strong>BlockDAG Smart Contract Integration:</strong> Trendpup uses the BlockDAG Primordial Testnet for its subscription system. Access to the dashboard and AI agent is gated by a BlockDAG smart contract (<code>SimpleAccessFee</code>). Users pay a small BDAG fee to unlock full access; the contract tracks paid users. The frontend uses RainbowKit and wagmi to connect wallets and interact with the contract.</li>
+                  <li><strong>Chain-Agnostic Design:</strong> Trendpup is ready to support native BlockDAG memecoin analytics as the ecosystem grows. All analytics, chat, and explorer features are designed for rapid migration to new EVM chains and token ecosystems.</li>
                 </ul>
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-800 mt-4 mb-2">Cognitive Analysis Engine</h3>
+              <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">BlockDAG Hackathon Context</h2>
               <div className="prose prose-sm">
                 <ul className="list-disc pl-5 mb-4">
-                  <li><strong>Data Aggregation:</strong> Scraper collects Solana token data from Jupiter and other DEXs, scrapes Twitter for token-related tweets and sentiment.</li>
-                  <li><strong>AI Analysis:</strong> Advanced ML models analyze tweets and token data, determines risk score, investment potential, and provides rationale for each token.</li>
-                  <li><strong>Intelligent Agent:</strong> Answers user queries with the latest token data and in-depth analysis using Retrieval-Augmented Generation.</li>
-                </ul>
-              </div>
-
-              <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Solana Integration</h2>
-              <div className="prose prose-sm">
-                <ul className="list-disc pl-5 mb-4">
-                  <li><strong>Network Details:</strong>
-                    <ul className="list-disc pl-5 mt-1">
-                      <li>Network: Solana Devnet (Development) / Mainnet-Beta (Production)</li>
-                      <li>Native Currency: SOL</li>
-                      <li>RPC URL: api.devnet.solana.com</li>
-                      <li>Block Explorer: explorer.solana.com</li>
-                    </ul>
-                  </li>
-                  <li><strong>Solana Wallet Integration:</strong>
-                    <ul className="list-disc pl-5 mt-1">
-                      <li>Phantom, Solflare, Backpack, and other popular Solana wallet support</li>
-                      <li>Seamless connection to Solana devnet and mainnet</li>
-                      <li>Real-time SOL balance and transaction monitoring</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-
-              <h2 className="text-xl font-bold text-gray-800 mt-6 mb-3">Strategic Advantages</h2>
-              <div className="prose prose-sm">
-                <ul className="list-disc pl-5 mb-4">
-                  <li><strong>Solana Exclusivity:</strong> Dedicated focus on the unique dynamics and opportunities within the SOL ecosystem</li>
-                  <li><strong>Early Signal Detection:</strong> Proprietary algorithms capable of identifying promising tokens hours or days before mainstream awareness</li>
-                  <li><strong>Integrated Data Intelligence:</strong> Unified analysis combining social indicators with on-chain Solana metrics</li>
-                  <li><strong>Scientific Methodology:</strong> Data-driven approach eliminating emotional decision-making</li>
-                  <li><strong>Aligned Success Incentives:</strong> Business model that ensures we win only when our users win</li>
-                  <li><strong>Fast Transaction Speed:</strong> Leveraging Solana's high-speed blockchain for rapid trade execution</li>
-                  <li><strong>Low Transaction Costs:</strong> Minimal fees on Solana network enable frequent trading strategies</li>
+                  <li><strong>Why BlockDAG?</strong> BlockDAG is a modular, EVM-compatible chain designed for high performance and composability. Trendpup leverages BlockDAG for programmable access control, subscription payments, and future memecoin analytics.</li>
+                  <li><strong>Future Vision:</strong> As BlockDAG's ecosystem grows, Trendpup will support native memecoin discovery, analytics, and trading. The AI agent and dashboard are chain-agnostic and ready for rapid migration.</li>
                 </ul>
               </div>
 
